@@ -39,7 +39,7 @@ class Module(AST):
         self.types = {type.name: type.value for type in dfns}
 
     def __repr__(self):
-        return "Module(%s, %s)" % (self.name, self.dfns)
+        return 'Module({0.name}, {0.dfns})'.format(self)
 
 class Type(AST):
     def __init__(self, name, value):
@@ -47,7 +47,7 @@ class Type(AST):
         self.value = value
 
     def __repr__(self):
-        return "Type(%s, %s)" % (self.name, self.value)
+        return 'Type({0.name}, {0.value})'.format(self)
 
 class Constructor(AST):
     def __init__(self, name, fields=None):
@@ -55,7 +55,7 @@ class Constructor(AST):
         self.fields = fields or []
 
     def __repr__(self):
-        return "Constructor(%s, %s)" % (self.name, self.fields)
+        return 'Constructor({0.name}, {0.fields})'.format(self)
 
 class Field(AST):
     def __init__(self, type, name=None, seq=False, opt=False):
@@ -72,9 +72,9 @@ class Field(AST):
         else:
             extra = ""
         if self.name is None:
-            return "Field(%s%s)" % (self.type, extra)
+            return 'Field({0.type}{1})'.format(self, extra)
         else:
-            return "Field(%s, %s%s)" % (self.type, self.name, extra)
+            return 'Field({0.type}, {0.name}{1})'.format(self, extra)
 
 class Sum(AST):
     def __init__(self, types, attributes=None):
@@ -83,9 +83,9 @@ class Sum(AST):
 
     def __repr__(self):
         if self.attributes:
-            return "Sum(%s, %s)" % (self.types, self.attributes)
+            return 'Sum({0.types}, {0.attributes})'.format(self)
         else:
-            return "Sum(%s)" % self.types
+            return 'Sum({0.types})'.format(self)
 
 class Product(AST):
     def __init__(self, fields, attributes=None):
@@ -94,9 +94,9 @@ class Product(AST):
 
     def __repr__(self):
         if self.attributes:
-            return "Product(%s, %s)" % (self.fields, self.attributes)
+            return 'Product({0.fields}, {0.attributes})'.format(self)
         else:
-            return "Product(%s)" % self.fields
+            return 'Product({0.fields})'.format(self)
 
 # A generic visitor for the meta-AST that describes ASDL. This can be used by
 # emitters. We also define a Check visitor that makes sure the parsed ASDL is
@@ -122,6 +122,10 @@ class VisitorBase:
                 raise
 
 class Check(VisitorBase):
+    """A visitor that checks a parsed ASDL tree for correctness.
+
+    Errors are printed and accumulated.
+    """
     def __init__(self):
         super().__init__()
         self.cons = {}
@@ -145,8 +149,8 @@ class Check(VisitorBase):
         if conflict is None:
             self.cons[key] = name
         else:
-            print("Redefinition of constructor %s" % key)
-            print("Defined in %s and %s" % (conflict, name))
+            print('Redefinition of constructor' + key)
+            print('Defined in {} and {}'.format(conflict, name))
             self.errors += 1
         for f in cons.fields:
             self.visit(f, key)
@@ -173,8 +177,7 @@ def check(mod):
         if t not in mod.types and not t in builtin_types:
             v.errors += 1
             uses = ", ".join(v.types[t])
-            print("Undefined type %s, used in %s" % (t, uses))
-
+            print('Undefined type {}, used in {}'.format(t, uses))
     return not v.errors
 
 # The ASDL parser itself comes next. The only interesting external interface
@@ -198,7 +201,7 @@ class ASDLSyntaxError(Exception):
         self.lineno = lineno or '<unknown>'
 
     def __str__(self):
-        return 'Syntax error on line %s: %s' % (self.lineno, self.msg)
+        return 'Syntax error on line {0.lineno}: {0.msg}'.format(self)
 
 def tokenize_asdl(buf):
     """Tokenize the given buffer. Yield Token objects."""
@@ -229,7 +232,7 @@ def tokenize_asdl(buf):
                 if pos < 0: pos = buflen
                 continue
             else:
-                raise ASDLSyntaxError('Invalid operator %s' % c, lineno)
+                raise ASDLSyntaxError('Invalid operator ' + c, lineno)
         else:
             # Operators
             op_kind = tokenize_asdl._operator_table.get(c, None)
@@ -247,14 +250,19 @@ tokenize_asdl._operator_table = {
     '|': TokenKind.Pipe,        '(': TokenKind.LParen,  ')': TokenKind.RParen,
     '*': TokenKind.Asterisk,    '{': TokenKind.LBrace,  '}': TokenKind.RBrace}
 
-
 class ASDLParser:
+    """Parser for ASDL files.
+
+    Create, then call the parse method on a buffer containing ASDL.
+    This is a simple recursive descent parser that uses tokenize_asdl for the
+    lexing.
+    """
     def __init__(self):
         self._tokenizer = None
         self.cur_token = None
 
     def parse(self, buf):
-        """ Parse the ASDL in the buffer and return an AST with a Module root.
+        """Parse the ASDL in the buffer and return an AST with a Module root.
         """
         self._tokenizer = tokenize_asdl(buf)
         self._advance()
@@ -264,8 +272,9 @@ class ASDLParser:
         if self._at_keyword('module'):
             self._advance()
         else:
-            raise ASDLSyntaxError('Expected "module" (found %s)' % (
-                self.cur_token.value), self.cur_token.lineno)
+            raise ASDLSyntaxError(
+                'Expected "module" (found {})'.format(self.cur_token.value),
+                self.cur_token.lineno)
         name = self._match(self._id_kinds)
         self._match(TokenKind.LBrace)
         defs = self._parse_definitions()
@@ -353,11 +362,12 @@ class ASDLParser:
     _id_kinds = (TokenKind.ConstructorId, TokenKind.TypeId)
 
     def _match(self, kind):
-        """ The 'match' primitive of RD parsers.
-            * Verifies that the current token is of the given kind (kind can
-              be a tuple, in which the kind must match one of its members).
-            * Returns the value of the current token
-            * Reads in the next token
+        """The 'match' primitive of RD parsers.
+
+        * Verifies that the current token is of the given kind (kind can
+          be a tuple, in which the kind must match one of its members).
+        * Returns the value of the current token
+        * Reads in the next token
         """
         if (isinstance(kind, tuple) and self.cur_token.kind in kind or
             self.cur_token.kind == kind
@@ -366,8 +376,9 @@ class ASDLParser:
             self._advance()
             return value
         else:
-            raise ASDLSyntaxError('Unmatched %s (found %s)' % (
-                kind, self.cur_token.kind), self.cur_token.lineno)
+            raise ASDLSyntaxError(
+                'Unmatched {} (found {})'.format(kind, self.cur_token.kind),
+                self.cur_token.lineno)
 
     def _at_keyword(self, keyword):
         return (self.cur_token.kind == TokenKind.TypeId and
