@@ -17,9 +17,6 @@ def get_c_type(name):
     This function special cases the default types provided by asdl:
     identifier, string, int.
     """
-    # XXX ack!  need to figure out where Id is useful and where string
-    #if isinstance(name, asdl.Id):
-        #name = name.value
     if name in asdl.builtin_types:
         return name
     else:
@@ -198,7 +195,7 @@ class StructVisitor(EmitVisitor):
         ctype = get_c_type(field.type)
         name = field.name
         if field.seq:
-            if field.type.value in ('cmpop',):
+            if field.type in ('cmpop',):
                 self.emit("asdl_int_seq *%(name)s;" % locals(), depth)
             else:
                 self.emit("asdl_seq *%(name)s;" % locals(), depth)
@@ -253,7 +250,7 @@ class PrototypeVisitor(EmitVisitor):
                 name = f.name
             # XXX should extend get_c_type() to handle this
             if f.seq:
-                if f.type.value in ('cmpop',):
+                if f.type in ('cmpop',):
                     ctype = "asdl_int_seq *"
                 else:
                     ctype = "asdl_seq *"
@@ -437,7 +434,7 @@ class Obj2ModVisitor(PickleVisitor):
             self.emit("", 0)
             for f in t.fields:
                 self.visitField(f, t.name, sum=sum, depth=2)
-            args = [f.name.value for f in t.fields] + [a.name.value for a in sum.attributes]
+            args = [f.name for f in t.fields] + [a.name for a in sum.attributes]
             self.emit("*out = %s(%s);" % (t.name, self.buildArgs(args)), 2)
             self.emit("if (*out == NULL) goto failed;", 2)
             self.emit("return 0;", 2)
@@ -465,7 +462,7 @@ class Obj2ModVisitor(PickleVisitor):
         self.emit("", 0)
         for f in prod.fields:
             self.visitField(f, name, prod=prod, depth=1)
-        args = [f.name.value for f in prod.fields]
+        args = [f.name for f in prod.fields]
         self.emit("*out = %s(%s);" % (name, self.buildArgs(args)), 1)
         self.emit("return 0;", 1)
         self.emit("failed:", 0)
@@ -487,7 +484,7 @@ class Obj2ModVisitor(PickleVisitor):
 
     def isSimpleSum(self, field):
         # XXX can the members of this list be determined automatically?
-        return field.type.value in ('expr_context', 'boolop', 'operator',
+        return field.type in ('expr_context', 'boolop', 'operator',
                                     'unaryop', 'cmpop')
 
     def isNumeric(self, field):
@@ -960,7 +957,7 @@ static int exists_not_none(PyObject *obj, _Py_Identifier *id)
 
     def visitProduct(self, prod, name):
         if prod.fields:
-            fields = name.value+"_fields"
+            fields = name+"_fields"
         else:
             fields = "NULL"
         self.emit('%s_type = make_type("%s", &AST_type, %s, %d);' %
@@ -987,7 +984,7 @@ static int exists_not_none(PyObject *obj, _Py_Identifier *id)
 
     def visitConstructor(self, cons, name, simple):
         if cons.fields:
-            fields = cons.name.value+"_fields"
+            fields = cons.name+"_fields"
         else:
             fields = "NULL"
         self.emit('%s_type = make_type("%s", %s_type, %s, %d);' %
@@ -1170,7 +1167,7 @@ class ObjVisitor(PickleVisitor):
     def set(self, field, value, depth):
         if field.seq:
             # XXX should really check for is_simple, but that requires a symbol table
-            if field.type.value == "cmpop":
+            if field.type == "cmpop":
                 # While the sequence elements are stored as void*,
                 # ast2obj_cmpop expects an enum
                 self.emit("{", depth)
