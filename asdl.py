@@ -16,11 +16,16 @@
 # sum           ::= constructor { "|" constructor } [attributes fields]
 # constructor   ::= ConstructorId [fields]
 #
-# [1] "The Zephyr Abstract Syntax Description Language" by Wang, et. al.
+# [1] "The Zephyr Abstract Syntax Description Language" by Wang, et. al. See
+#     http://asdl.sourceforge.net/
 #-------------------------------------------------------------------------------
 from collections import namedtuple
 from enum import Enum
 import re
+
+__all__ = [
+    'builtin_types', 'parse', 'AST', 'Module', 'Type', 'Constructor',
+    'Field', 'Sum', 'Product', 'VisitorBase', 'Check', 'check']
 
 # The following classes define nodes into which the ASDL description is parsed.
 # Note: this is a "meta-AST". ASDL files (such as Python.asdl) describe the AST
@@ -383,4 +388,3 @@ class ASDLParser:
     def _at_keyword(self, keyword):
         return (self.cur_token.kind == TokenKind.TypeId and
                 self.cur_token.value == keyword)
-
