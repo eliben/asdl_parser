@@ -1,6 +1,6 @@
 #-------------------------------------------------------------------------------
 # Parser for ASDL [1] definition files. Reads in an ASDL description and parses
-# it into an AST (asdl_ast) that describes it.
+# it into an AST that describes it.
 #
 # The EBNF we're parsing here: Figure 1 of the paper [1]. Extended to support
 # modules and attributes after a product. Words starting with Capital letters
@@ -17,9 +17,6 @@
 # constructor   ::= ConstructorId [fields]
 #
 # [1] "The Zephyr Abstract Syntax Description Language" by Wang, et. al.
-#
-# Eli Bendersky (eliben@gmail.com)
-# This code is in the public domain
 #-------------------------------------------------------------------------------
 from collections import namedtuple
 from enum import Enum
@@ -27,6 +24,11 @@ import re
 
 builtin_types = set(
     ['boolean', 'identifier', 'string', 'bytes', 'int', 'object', 'singleton'])
+
+# The following classes define nodes into which the ASDL description is parsed.
+# Note: these is a "meta-AST". ASDL files (such as Python.asdl) describe the AST
+# structure used by a programming language. But ASDL files themselves need to be
+# parsed. This module parses ASDL files and uses a simple AST to represent them.
 
 class AST: pass # a marker class
 
@@ -96,9 +98,12 @@ class Product(AST):
         else:
             return "Product(%s)" % self.fields
 
+# A generic visitor for the meta-AST that describes ASDL. This can be used by
+# emitters. We also define a Check visitor that makes sure the parsed ASDL is
+# well-formed.
+
 class VisitorBase:
-    """ Generic tree visitor for ASTs.
-    """
+    """Generic tree visitor for ASTs."""
     def __init__(self):
         self.cache = {}
 
@@ -172,6 +177,15 @@ def check(mod):
 
     return not v.errors
 
+# The ASDL parser itself comes next. The only interesting external interface
+# here is the top-level parse function.
+
+def parse(filename):
+    """Parse ASDL from the given file and return a Module node describing it."""
+    with open(filename) as f:
+        parser = ASDLParser()
+        return parser.parse(f.read())
+
 # Types for describing tokens in an ASDL specification.
 TokenKind = Enum('TokenKind', '''ConstructorId TypeId Equals Question Pipe
                                  LParen RParen Comma Asterisk LBrace RBrace''')
@@ -187,8 +201,7 @@ class ASDLSyntaxError(Exception):
         return 'Syntax error on line %s: %s' % (self.lineno, self.msg)
 
 def tokenize_asdl(buf):
-    """ Tokenize the given buffer. Yield Token objects.
-    """
+    """Tokenize the given buffer. Yield Token objects."""
     buflen = len(buf)
     pos = 0
     lineno = 1
@@ -359,24 +372,4 @@ class ASDLParser:
     def _at_keyword(self, keyword):
         return (self.cur_token.kind == TokenKind.TypeId and
                 self.cur_token.value == keyword)
-
-if __name__ == '__main__':
-    buf = '''
-        stm = Compound(stm, stm)
-            | Assign(identifier, exp) -- comment
-            -- another comment (, foo
-            | attributes (int kwa, foo bar)
-            --kowo     '''
-
-    import sys
-    with open(sys.argv[1]) as f:
-        buf = f.read()
-    p = ASDLParser()
-    ast = p.parse(buf)
-
-    from asdl_ast import check
-    check(ast)
-    print(ast)
-    #for t in tokenize_asdl(buf):
-        #print(t)
 

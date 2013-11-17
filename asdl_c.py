@@ -18,8 +18,8 @@ def get_c_type(name):
     identifier, string, int.
     """
     # XXX ack!  need to figure out where Id is useful and where string
-    if isinstance(name, asdl.Id):
-        name = name.value
+    #if isinstance(name, asdl.Id):
+        #name = name.value
     if name in asdl.builtin_types:
         return name
     else:

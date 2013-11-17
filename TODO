@@ -1,0 +1,9 @@
+* PEP-8 style docstrings and comments
+* Need a "parse" convenience methods - as the one asdl_c uses
+* Remove "ifmain" code in the bottom
+* Add tests (parse Python.asdl and do basic sanity checking on it)
+
+More Python 3-ification:
+
+* use .format instead of %s
+
