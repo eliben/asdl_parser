@@ -22,13 +22,13 @@ from collections import namedtuple
 from enum import Enum
 import re
 
-builtin_types = set(
-    ['boolean', 'identifier', 'string', 'bytes', 'int', 'object', 'singleton'])
-
 # The following classes define nodes into which the ASDL description is parsed.
-# Note: these is a "meta-AST". ASDL files (such as Python.asdl) describe the AST
+# Note: this is a "meta-AST". ASDL files (such as Python.asdl) describe the AST
 # structure used by a programming language. But ASDL files themselves need to be
 # parsed. This module parses ASDL files and uses a simple AST to represent them.
+
+builtin_types = set(
+    ['identifier', 'string', 'bytes', 'int', 'object', 'singleton'])
 
 class AST: pass # a marker class
 

@@ -10,7 +10,7 @@ module Python
         | Suite(stmt* body)
 
     stmt = FunctionDef(identifier name, arguments args, 
-                           stmt* body, expr* decorator_list, expr? returns)
+                       stmt* body, expr* decorator_list, expr? returns)
           | ClassDef(identifier name, 
              expr* bases,
              keyword* keywords,

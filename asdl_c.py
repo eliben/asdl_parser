@@ -1,9 +1,6 @@
 #! /usr/bin/env python
 """Generate C code from an ASDL description."""
 
-# TO DO
-# handle fields that have a type but no name
-
 import os, sys
 
 import asdl
@@ -14,8 +11,7 @@ MAX_COL = 80
 def get_c_type(name):
     """Return a string for the C name of the type.
 
-    This function special cases the default types provided by asdl:
-    identifier, string, int.
+    This function special cases the default types provided by asdl.
     """
     if name in asdl.builtin_types:
         return name
@@ -141,7 +137,7 @@ class TypeDefVisitor(EmitVisitor):
 
 
 class StructVisitor(EmitVisitor):
-    """Visitor to generate typdefs for AST."""
+    """Visitor to generate typedefs for AST."""
 
     def visitModule(self, mod):
         for dfn in mod.dfns:
@@ -185,9 +181,6 @@ class StructVisitor(EmitVisitor):
                 self.visit(f, depth + 1)
             self.emit("} %s;" % cons.name, depth)
             self.emit("", depth)
-        else:
-            # XXX not sure what I want here, nothing is probably fine
-            pass
 
     def visitField(self, field, depth):
         # XXX need to lookup field.type, because it might be something
@@ -195,7 +188,7 @@ class StructVisitor(EmitVisitor):
         ctype = get_c_type(field.type)
         name = field.name
         if field.seq:
-            if field.type in ('cmpop',):
+            if field.type == 'cmpop':
                 self.emit("asdl_int_seq *%(name)s;" % locals(), depth)
             else:
                 self.emit("asdl_seq *%(name)s;" % locals(), depth)
@@ -250,7 +243,7 @@ class PrototypeVisitor(EmitVisitor):
                 name = f.name
             # XXX should extend get_c_type() to handle this
             if f.seq:
-                if f.type in ('cmpop',):
+                if f.type == 'cmpop':
                     ctype = "asdl_int_seq *"
                 else:
                     ctype = "asdl_seq *"
@@ -485,7 +478,7 @@ class Obj2ModVisitor(PickleVisitor):
     def isSimpleSum(self, field):
         # XXX can the members of this list be determined automatically?
         return field.type in ('expr_context', 'boolop', 'operator',
-                                    'unaryop', 'cmpop')
+                              'unaryop', 'cmpop')
 
     def isNumeric(self, field):
         return get_c_type(field.type) in ("int", "bool")
