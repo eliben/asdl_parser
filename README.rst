@@ -1,10 +1,16 @@
 asdl_parser
 ===========
 
-Standalone ASDL parser for upstream CPython 3.x
+Standalone ASDL parser for upstream CPython 3.x.
 
-Note: asdl_c.py and Python.asdl are copied over from the CPython repository.
-asdl_c.py has only very small cleanups applied.
+The parser is in a single file - asdl.py; it contains a hand-written lexer and a
+recursive-descent parser.
+
+Note: Python.asdl (the ASDL definition file for Python) and asdl_c.py (emitter
+for Python-ast.[hc]) are copied over from the CPython repository (default
+branch); I applied asdl_c.py some very small cleanups to asdl_c.py, mainly
+because asdl.py produces cleaner ASTs than the old Spark-based parser. When run,
+it produces exactly the same Python-ast.[hc] as in upstream CPython.
 
 License
 =======
