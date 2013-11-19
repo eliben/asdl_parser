@@ -1,4 +1,3 @@
-* Add tests (parse Python.asdl and do basic sanity checking on it)
 * Update asdl_c.py... can be done separately
 
 More Python 3-ification:

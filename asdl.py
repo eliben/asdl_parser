@@ -31,11 +31,15 @@ __all__ = [
 # Note: this is a "meta-AST". ASDL files (such as Python.asdl) describe the AST
 # structure used by a programming language. But ASDL files themselves need to be
 # parsed. This module parses ASDL files and uses a simple AST to represent them.
+# See the EBNF at the top of the file to understand the logical connection
+# between the various node types.
 
 builtin_types = set(
     ['identifier', 'string', 'bytes', 'int', 'object', 'singleton'])
 
-class AST: pass # a marker class
+class AST:
+    def __repr__(self):
+        raise NotImplementedError
 
 class Module(AST):
     def __init__(self, name, dfns):
@@ -235,6 +239,7 @@ def tokenize_asdl(buf):
         elif c == '-':
             # Potential comment, if followed by another '-'
             if pos < buflen - 1 and buf[pos + 1] == '-':
+                # Skip until line end
                 pos = buf.find('\n', pos + 1)
                 if pos < 0: pos = buflen
                 continue
