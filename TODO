@@ -4,3 +4,15 @@ More Python 3-ification:
 
 *
 
+Modernization of asdl_c.py:
+
+* s/getopt/argparse/
+* INC_DIR/SRC_DIR globals to communicate stuff into main() - meh
+* Get rid of XXXs - at this point we can assume they're resolved
+* Remove limitation of not being able to produce both C and H simultaneously
+* Node-speficic hacks in reflow_lines??
+
+Makefiles:
+
+* Why run asdl_c twice / parse the ASDL twice?
+
