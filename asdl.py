@@ -4,16 +4,16 @@
 #
 # The EBNF we're parsing here: Figure 1 of the paper [1]. Extended to support
 # modules and attributes after a product. Words starting with Capital letters
-# are terminals. Others are non-terminals. Id is either TokenId or
-# ConstructorId.
+# are terminals. Literal tokens are in "double quotes". Others are
+# non-terminals. Id is either TokenId or ConstructorId.
 #
-# module        ::= Id Id "{" [definitions] "}"
+# module        ::= "module" Id "{" [definitions] "}"
 # definitions   ::= { TypeId "=" type }
 # type          ::= product | sum
-# product       ::= fields [attributes fields]
+# product       ::= fields ["attributes" fields]
 # fields        ::= "(" { field, "," } field ")"
 # field         ::= TypeId ["?" | "*"] [Id]
-# sum           ::= constructor { "|" constructor } [attributes fields]
+# sum           ::= constructor { "|" constructor } ["attributes" fields]
 # constructor   ::= ConstructorId [fields]
 #
 # [1] "The Zephyr Abstract Syntax Description Language" by Wang, et. al. See
