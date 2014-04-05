@@ -20,7 +20,6 @@
 #     http://asdl.sourceforge.net/
 #-------------------------------------------------------------------------------
 from collections import namedtuple
-from enum import Enum
 import re
 
 __all__ = [
@@ -160,7 +159,7 @@ class Check(VisitorBase):
         if conflict is None:
             self.cons[key] = name
         else:
-            print('Redefinition of constructor' + key)
+            print('Redefinition of constructor {}'.format(key))
             print('Defined in {} and {}'.format(conflict, name))
             self.errors += 1
         for f in cons.fields:
@@ -201,8 +200,14 @@ def parse(filename):
         return parser.parse(f.read())
 
 # Types for describing tokens in an ASDL specification.
-TokenKind = Enum('TokenKind', '''ConstructorId TypeId Equals Question Pipe
-                                 LParen RParen Comma Asterisk LBrace RBrace''')
+class TokenKind:
+    """TokenKind is provides a scope for enumerated token kinds."""
+    (ConstructorId, TypeId, Equals, Comma, Question, Pipe, Asterisk,
+     LParen, RParen, LBrace, RBrace) = range(11)
+
+    operator_table = {
+        '=': Equals, ',': Comma,    '?': Question, '|': Pipe,    '(': LParen,
+        ')': RParen, '*': Asterisk, '{': LBrace,   '}': RBrace}
 
 Token = namedtuple('Token', 'kind value lineno')
 
@@ -216,51 +221,25 @@ class ASDLSyntaxError(Exception):
 
 def tokenize_asdl(buf):
     """Tokenize the given buffer. Yield Token objects."""
-    buflen = len(buf)
-    pos = 0
-    lineno = 1
-
-    while pos < buflen:
-        m = tokenize_asdl._re_skip_whitespace.search(buf, pos)
-        if not m: return
-        lineno += buf.count('\n', pos, m.start())
-        pos = m.start()
-        c = buf[pos]
-        if c.isalpha():
-            # Some kind of identifier
-            m = tokenize_asdl._re_nonword.search(buf, pos + 1)
-            end = m.end() - 1 if m else buflen
-            id = buf[pos:end]
-            if c.isupper():
-                yield Token(TokenKind.ConstructorId, id, lineno)
+    for lineno, line in enumerate(buf.splitlines(), 1):
+        for m in re.finditer(r'\s*(\w+|--.*|.)', line.strip()):
+            c = m.group(1)
+            if c[0].isalpha():
+                # Some kind of identifier
+                if c[0].isupper():
+                    yield Token(TokenKind.ConstructorId, c, lineno)
+                else:
+                    yield Token(TokenKind.TypeId, c, lineno)
+            elif c[:2] == '--':
+                # Comment
+                break
             else:
-                yield Token(TokenKind.TypeId, id, lineno)
-            pos = end
-        elif c == '-':
-            # Potential comment, if followed by another '-'
-            if pos < buflen - 1 and buf[pos + 1] == '-':
-                # Skip until line end
-                pos = buf.find('\n', pos + 1)
-                if pos < 0: pos = buflen
-                continue
-            else:
-                raise ASDLSyntaxError('Invalid operator ' + c, lineno)
-        else:
-            # Operators
-            op_kind = tokenize_asdl._operator_table.get(c, None)
-            if op_kind:
+                # Operators
+                try:
+                    op_kind = TokenKind.operator_table[c]
+                except KeyError:
+                    raise ASDLSyntaxError('Invalid operator %s' % c, lineno)
                 yield Token(op_kind, c, lineno)
-            else:
-                raise ASDLSyntaxError('Invalid operator %s' % c, lineno)
-            pos += 1
-
-# Immutable helper objects for tokenize_asdl.
-tokenize_asdl._re_skip_whitespace = re.compile(r'\S')
-tokenize_asdl._re_nonword = re.compile(r'\W')
-tokenize_asdl._operator_table = {
-    '=': TokenKind.Equals,      ',': TokenKind.Comma,   '?': TokenKind.Question,
-    '|': TokenKind.Pipe,        '(': TokenKind.LParen,  ')': TokenKind.RParen,
-    '*': TokenKind.Asterisk,    '{': TokenKind.LBrace,  '}': TokenKind.RBrace}
 
 class ASDLParser:
     """Parser for ASDL files.
