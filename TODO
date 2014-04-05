@@ -1,9 +1,5 @@
 * Update asdl_c.py... can be done separately
 
-More Python 3-ification:
-
-*
-
 Modernization of asdl_c.py:
 
 * s/getopt/argparse/
@@ -14,5 +10,6 @@ Modernization of asdl_c.py:
 
 Makefiles:
 
-* Why run asdl_c twice / parse the ASDL twice?
+* Why run asdl_c twice / parse the ASDL twice? - because makefile rules want
+  to have a single target.
 

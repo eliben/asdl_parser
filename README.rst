@@ -12,6 +12,11 @@ branch); I applied some very small cleanups to asdl_c.py, mainly
 because asdl.py produces cleaner ASTs than the old Spark-based parser. When run,
 it produces exactly the same Python-ast.[hc] as in upstream CPython.
 
+Python version
+==============
+
+The officially required version is Python 3.3, but should run with any 3.x
+
 License
 =======
 
