@@ -1,3 +1,12 @@
+Status - please read this first!
+================================
+
+This code has been submitted to upstream CPython in
+`early 2014 <https://bugs.python.org/issue19655>`_. I keep the separate
+repository alive mostly for historic interest and for folks who want to play
+with real ASDL-based code generators in a simpler environment than the
+CPython repository.
+
 asdl_parser
 ===========
 
